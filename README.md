@@ -88,3 +88,23 @@ choose to do this.
 - Model: set `MODEL_PROVIDER` / `MODEL` (default openai / gpt-4o; e.g. anthropic, google).
 - Knowledge/persona: edit `vapi/system_prompt.md` and `kb/mcws_knowledge_base.md`, then
   rebuild the config (re-embed the KB into the system message) and re-run `deploy_vapi.py`.
+
+
+## Contributing
+
+Contributions are welcome — this is a community project.
+
+1. **Fork** the repo (button at the top right of the GitHub page) or, if you have write access, create a branch.
+2. **Make your change** — improve the knowledge base (`kb/`), tune the assistant persona (`vapi/system_prompt.md`), add or fix a webhook tool (`backend/app.py`), or improve the docs.
+3. **Test it** before opening a PR:
+   - Webhook: `cd backend && pip install -r requirements.txt && python app.py`, then hit `http://localhost:8080/` and `/prayer-times`.
+   - Assistant behavior: after deploying, test via the Vapi chat API (`POST https://api.vapi.ai/chat` with `{assistantId, input}`) — see `BUILD_YOUR_OWN.md`.
+4. **Open a Pull Request** describing what you changed and why. Small, focused PRs are easiest to review.
+
+**Good first contributions:** correcting or expanding masjid facts in `kb/mcws_knowledge_base.md`, tightening the assistant's voice replies, adding a new tool (e.g. class registration links), or improving the take-a-message delivery options.
+
+Please don't commit secrets — the Vapi API key is read from an environment variable only and must never appear in code (see `.env.example`).
+
+## Credits
+
+An idea from the MCWS community, built as a pilot for the Muslim Community of the Western Suburbs (Canton, MI).
