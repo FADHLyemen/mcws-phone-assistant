@@ -30,6 +30,10 @@ SMTP_HOST = os.environ.get("SMTP_HOST")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 SMTP_USER = os.environ.get("SMTP_USER")
 SMTP_PASS = os.environ.get("SMTP_PASS")
+EVENTS_ICS_URL = os.environ.get("EVENTS_ICS_URL")     # optional Google Calendar public iCal (.ics) feed
+EVENTS_TZ = os.environ.get("EVENTS_TZ", "America/Detroit")
+EVENTS_WINDOW_DAYS = int(os.environ.get("EVENTS_WINDOW_DAYS", "60"))
+EVENTS_MAX = int(os.environ.get("EVENTS_MAX", "8"))
 
 # ---------------------------------------------------------------- prayer times
 def _say_time(t):
@@ -61,25 +65,79 @@ def tool_get_prayer_times(args):
     return data
 
 # ---------------------------------------------------------------- events
-def tool_get_upcoming_events(args=None):
+def _events_from_ics(url):
+    """Structured upcoming events from a public Google Calendar iCal (.ics) feed.
+
+    Expands recurring events (weekly halaqas etc.), returns the next EVENTS_MAX
+    occurrences within EVENTS_WINDOW_DAYS with title, date, time and location.
+    """
+    import icalendar, recurring_ical_events
+    from datetime import datetime as _dt, time as _time
     try:
-        r = requests.get("https://www.mcws.org/events", timeout=15,
-                         headers={"User-Agent": "MCWS-Assistant"})
-        s = BeautifulSoup(r.text, "lxml")
-        for t in s(["script", "style", "noscript"]):
-            t.decompose()
-        lines = [ln.strip() for ln in s.get_text("\n").splitlines() if ln.strip()]
-        # drop obvious nav/boilerplate; keep from after the "Home /" breadcrumb
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo(EVENTS_TZ)
+    except Exception:
+        tz = None
+    r = requests.get(url, timeout=15, headers={"User-Agent": "MCWS-Assistant"})
+    r.raise_for_status()
+    cal = icalendar.Calendar.from_ical(r.content)
+    now = _dt.now(tz) if tz else _dt.now()
+    window = now + timedelta(days=EVENTS_WINDOW_DAYS)
+    occ = recurring_ical_events.of(cal).between(now, window)
+
+    def keyfn(e):
+        s = e["DTSTART"].dt
+        if isinstance(s, _dt):
+            return s.astimezone(tz) if (tz and s.tzinfo) else s
+        return _dt.combine(s, _time(), tz) if tz else _dt.combine(s, _time())
+
+    lines = []
+    for e in sorted(occ, key=keyfn):
+        s = e["DTSTART"].dt
+        title = str(e.get("SUMMARY", "")).strip()
+        loc = str(e.get("LOCATION", "")).strip()
+        if isinstance(s, _dt):
+            s_local = s.astimezone(tz) if (tz and s.tzinfo) else s
+            when = s_local.strftime("%A, %B %-d at %-I:%M %p")
+        else:
+            when = s.strftime("%A, %B %-d (all day)")
+        lines.append("%s — %s%s" % (title, when, (" at %s" % loc if loc else "")))
+        if len(lines) >= EVENTS_MAX:
+            break
+    return {"events": lines,
+            "events_text": "\n".join(lines) if lines else "No upcoming events are scheduled right now.",
+            "source": "MCWS Google Calendar",
+            "note": "Read the next few upcoming events with their date, time and location."}
+
+
+def _events_from_website():
+    """Fallback: live-scrape the rendered mcws.org/events page text."""
+    r = requests.get("https://www.mcws.org/events", timeout=15,
+                     headers={"User-Agent": "MCWS-Assistant"})
+    s = BeautifulSoup(r.text, "lxml")
+    for t in s(["script", "style", "noscript"]):
+        t.decompose()
+    lines = [ln.strip() for ln in s.get_text("\n").splitlines() if ln.strip()]
+    try:
+        i = lines.index("/")
+        lines = lines[i + 1:]
+    except ValueError:
+        pass
+    text = "\n".join(lines).split("Newsletter")[0]
+    return {"events_text": text[:2500],
+            "source": "mcws.org/events",
+            "note": "Summarize the next few upcoming events with date and location. Full list at mcws.org/events."}
+
+
+def tool_get_upcoming_events(args=None):
+    # Prefer a configured Google Calendar iCal feed (structured); fall back to the website.
+    if EVENTS_ICS_URL:
         try:
-            i = lines.index("/")
-            lines = lines[i + 1:]
-        except ValueError:
-            pass
-        text = "\n".join(lines)
-        text = text.split("Newsletter")[0]  # cut footer if present
-        return {"events_text": text[:2500],
-                "source": "mcws.org/events",
-                "note": "Summarize the next few upcoming events with date and location. Full list at mcws.org/events."}
+            return _events_from_ics(EVENTS_ICS_URL)
+        except Exception as e:
+            log.exception("ics events failed; falling back to website")
+    try:
+        return _events_from_website()
     except Exception as e:
         log.exception("events fetch failed")
         return {"error": "Could not load events right now.",

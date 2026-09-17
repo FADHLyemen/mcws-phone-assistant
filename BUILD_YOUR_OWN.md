@@ -42,8 +42,23 @@ anything that changes (prayer times, events, messages) is served live by the web
 - Change voice/model via the `VOICE_*` / `MODEL_*` env vars.
 
 ## 4. Events tool
-- `backend/app.py:tool_get_upcoming_events` fetches `mcws.org/events` and returns
-  the page text for the model to summarize. Point it at your own events page URL.
+`backend/app.py:tool_get_upcoming_events` has two sources, in priority order:
+
+1. **Google Calendar feed (recommended, structured).** Set `EVENTS_ICS_URL` to a
+   public Google Calendar iCal (.ics) URL and the tool reads real events — title,
+   date, time, location — and expands recurring events (e.g. a weekly halaqa).
+   To set it up:
+   - In Google Calendar, create a calendar the office maintains (or use an existing one).
+   - Settings → *Settings for my calendars* → your calendar → **Access permissions** →
+     check *Make available to public*.
+   - Same page → **Integrate calendar** → copy the **Public address in iCal format**
+     (a URL ending in `.ics`).
+   - Point the live service at it:
+     `gcloud run services update mcws-assistant --region us-central1 --update-env-vars EVENTS_ICS_URL=<that .ics url>`
+   - Tune with `EVENTS_TZ`, `EVENTS_WINDOW_DAYS`, `EVENTS_MAX` (see `.env.example`).
+2. **Website fallback (default).** If `EVENTS_ICS_URL` is unset, it live-scrapes the
+   events page text (`https://www.mcws.org/events`) for the model to summarize. Point
+   it at your own events page URL if you adapt this for another site.
 
 ## 5. Deploy
 Follow `README.md`:
