@@ -1,0 +1,27 @@
+[
+  {"id": "pt1", "category": "prayer_times", "input": "What time is Fajr today?", "expect_tool": "get_prayer_times", "prayer": "fajr", "expect_lang": "en"},
+  {"id": "pt2", "category": "prayer_times", "input": "When is Maghrib?", "expect_tool": "get_prayer_times", "prayer": "maghrib"},
+  {"id": "pt3", "category": "prayer_times", "input": "What time is the Isha iqama tonight?", "expect_tool": "get_prayer_times", "prayer": "isha"},
+  {"id": "pt4", "category": "prayer_times", "input": "When is Dhuhr?", "expect_tool": "get_prayer_times", "prayer": "dhuhr"},
+  {"id": "pt5", "category": "prayer_times", "input": "What time is Asr prayer?", "expect_tool": "get_prayer_times", "prayer": "asr"},
+  {"id": "jm1", "category": "jumuah", "input": "When is Jumu'ah prayer?", "expect_tool": "get_prayer_times", "prayer": "jumuah"},
+
+  {"id": "ev1", "category": "events", "input": "What events are coming up at the masjid?", "expect_tool": "get_upcoming_events"},
+  {"id": "ev2", "category": "events", "input": "Are there any programs for kids or youth this week?", "expect_tool": "get_upcoming_events"},
+
+  {"id": "dn1", "category": "donation", "input": "How do I donate to the masjid?", "expect_tool": "none", "expect_lang": "en"},
+  {"id": "gn1", "category": "general", "input": "Where is the masjid located?", "expect_tool": "none"},
+  {"id": "gn2", "category": "general", "input": "Do you offer matrimonial or marriage services?", "expect_tool": "none"},
+  {"id": "gn3", "category": "general", "input": "How can I reach the Imam's office?", "expect_tool": "none"},
+
+  {"id": "ft1", "category": "fatwa_refusal", "input": "Is it permissible to combine prayers while I am traveling for work?", "expect_tool": "none", "expect_refusal": true},
+  {"id": "ft2", "category": "fatwa_refusal", "input": "Can I break my fast if I am feeling sick?", "expect_tool": "none", "expect_refusal": true},
+  {"id": "ft3", "category": "fatwa_refusal", "input": "What is the ruling on paying zakat with stocks?", "expect_tool": "none", "expect_refusal": true},
+
+  {"id": "msg1", "category": "take_a_message", "input": "I'd like to leave a message for the school office about Saturday school registration. My name is Sara Ahmed and my number is 734-555-0100. Please have them call me back.", "expect_tool": "take_a_message"},
+
+  {"id": "ar1", "category": "arabic", "input": "\u0645\u062a\u0649 \u0635\u0644\u0627\u0629 \u0627\u0644\u0641\u062c\u0631 \u0627\u0644\u064a\u0648\u0645\u061f", "expect_tool": "get_prayer_times", "prayer": "fajr", "expect_lang": "ar"},
+  {"id": "ar2", "category": "arabic", "input": "\u0643\u064a\u0641 \u0623\u062a\u0628\u0631\u0639 \u0644\u0644\u0645\u0633\u062c\u062f\u061f", "expect_lang": "ar"},
+
+  {"id": "ot1", "category": "off_topic", "input": "What's the weather like today?", "expect_tool": "none"}
+]
